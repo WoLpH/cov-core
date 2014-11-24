@@ -81,6 +81,7 @@ class CovController(object):
 
     def summary(self, stream):
         """Produce coverage reports."""
+        total = 0
 
         # Output coverage section header.
         if len(self.node_descs) == 1:
@@ -93,21 +94,21 @@ class CovController(object):
         # Produce terminal report if wanted.
         if 'term' in self.cov_report or 'term-missing' in self.cov_report:
             show_missing = 'term-missing' in self.cov_report
-            self.cov.report(show_missing=show_missing, ignore_errors=True, file=stream)
+            total = self.cov.report(show_missing=show_missing, ignore_errors=True, file=stream)
 
         # Produce annotated source code report if wanted.
         if 'annotate' in self.cov_report:
-            self.cov.annotate(ignore_errors=True)
+            total = self.cov.annotate(ignore_errors=True)
             stream.write('Coverage annotated source written next to source\n')
 
         # Produce html report if wanted.
         if 'html' in self.cov_report:
-            self.cov.html_report(ignore_errors=True)
+            total = self.cov.html_report(ignore_errors=True)
             stream.write('Coverage HTML written to dir %s\n' % self.cov.config.html_dir)
 
         # Produce xml report if wanted.
         if 'xml' in self.cov_report:
-            self.cov.xml_report(ignore_errors=True)
+            total = self.cov.xml_report(ignore_errors=True)
             stream.write('Coverage XML written to file %s\n' % self.cov.config.xml_output)
 
         # Report on any failed slaves.
@@ -117,6 +118,8 @@ class CovController(object):
                          'ensure that pytest-cov is installed on these slaves.\n')
             for node in self.failed_slaves:
                 stream.write('%s\n' % node.gateway.id)
+
+        return total
 
 
 class Central(CovController):
@@ -145,7 +148,7 @@ class Central(CovController):
     def summary(self, stream):
         """Produce coverage reports."""
 
-        CovController.summary(self, stream)
+        return CovController.summary(self, stream)
 
 
 class DistMaster(CovController):
@@ -211,7 +214,7 @@ class DistMaster(CovController):
     def summary(self, stream):
         """Produce coverage reports."""
 
-        CovController.summary(self, stream)
+        return CovController.summary(self, stream)
 
 
 class DistSlave(CovController):
